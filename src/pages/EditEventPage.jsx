@@ -137,7 +137,7 @@ const EditEventPage = () => {
       <Alert status="error">
         <AlertIcon />
         <AlertTitle>Failed to load event</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>{/*error*/}</AlertDescription>
       </Alert>
     );
   }
