@@ -1,18 +1,21 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Button,
+  Heading,
   FormControl,
   FormLabel,
   Input,
-  Textarea,
-  Heading,
+  Button,
   VStack,
+  Container,
+  Textarea,
+  Select,
   CheckboxGroup,
   Checkbox,
-  Select,
+  Avatar,
+  useToast,
 } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import { DataContext } from '../contexts/DataContext';
 
 const AddEventPage = () => {
@@ -22,25 +25,43 @@ const AddEventPage = () => {
   const [image, setImage] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [categoryIds, setCategoryIds] = useState([]);
+  const [location, setLocation] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [createdBy, setCreatedBy] = useState('');
+  const toast = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleCategoryChange = (values) => {
+    setSelectedCategories(values.map(Number));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    // Input validation
+    if (!title || !description || !startTime || !endTime || !createdBy || !location) {
+      toast({
+        title: 'Error',
+        description: 'All fields must be filled out.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const newEvent = {
+      title,
+      description,
+      image,
+      startTime,
+      endTime,
+      location,
+      categoryIds: selectedCategories,
+      createdBy: Number(createdBy),
+    };
+
     try {
-      const newEvent = {
-        title,
-        description,
-        image,
-        startTime,
-        endTime,
-        categoryIds: categoryIds.length ? categoryIds.map((id) => parseInt(id)) : ['unknown'],
-        createdBy: parseInt(createdBy),
-      };
-
-      console.log('New Event Data: ', newEvent);
-
       const response = await fetch('http://localhost:3000/events', {
         method: 'POST',
         headers: {
@@ -49,85 +70,109 @@ const AddEventPage = () => {
         body: JSON.stringify(newEvent),
       });
 
-      const addedEvent = await response.json();
-      setEvents((prevEvents) => [...prevEvents, addedEvent]);
+      if (!response.ok) throw new Error('Failed to add event');
 
-      navigate('/events');
+      const createdEvent = await response.json();
+      setEvents((prevEvents) => [...prevEvents, createdEvent]);
+
+      toast({
+        title: 'Event created.',
+        description: 'Your event has been added successfully.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      navigate('/');
     } catch (error) {
-      console.error('Error adding event:', error);
+      toast({
+        title: 'Error',
+        description: 'There was an error creating the event.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   return (
-    <Box p={4}>
-      <Heading>Add Event</Heading>
-      <VStack as="form" spacing={4} onSubmit={handleSubmit}>
-        <FormControl isRequired>
-          <FormLabel>Title</FormLabel>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Description</FormLabel>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Image URL</FormLabel>
-          <Input value={image} onChange={(e) => setImage(e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Start Time</FormLabel>
-          <Input
-            type="datetime-local"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>End Time</FormLabel>
-          <Input
-            type="datetime-local"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Categories</FormLabel>
-          <CheckboxGroup
-            value={categoryIds}
-            onChange={setCategoryIds}
-          >
-            <VStack align="start">
-              {categories.map((category) => (
-                <Checkbox key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </Checkbox>
+    <Container maxW="container.md" p={4}>
+      <Heading mb={4}>Add New Event</Heading>
+      <form onSubmit={handleSubmit}>
+        <VStack spacing={4} align="stretch">
+          <FormControl isRequired>
+            <FormLabel>Title</FormLabel>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </FormControl>
+          <FormControl isRequired>
+            <FormLabel>Description</FormLabel>
+            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Image URL</FormLabel>
+            <Input value={image} onChange={(e) => setImage(e.target.value)} />
+          </FormControl>
+          <FormControl isRequired>
+            <FormLabel>Start Time</FormLabel>
+            <Input
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+          </FormControl>
+          <FormControl isRequired>
+            <FormLabel>End Time</FormLabel>
+            <Input
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+          </FormControl>
+          <FormControl isRequired>
+            <FormLabel>Location</FormLabel>
+            <Input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Categories</FormLabel>
+            <CheckboxGroup
+              value={selectedCategories.map(String)}
+              onChange={handleCategoryChange}
+            >
+              <VStack align="start">
+                {categories.map((category) => (
+                  <Checkbox key={category.id} value={category.id.toString()}>
+                    {category.name}
+                  </Checkbox>
+                ))}
+                <Checkbox value="999">others</Checkbox> {/* Adding the 'Others' category */}
+              </VStack>
+            </CheckboxGroup>
+          </FormControl>
+          <FormControl isRequired>
+            <FormLabel>Created By</FormLabel>
+            <Select
+              placeholder="Select creator"
+              value={createdBy}
+              onChange={(e) => setCreatedBy(e.target.value)}
+            >
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  <Avatar size="xs" mr={2} src={user.image} name={user.name} />
+                  {user.name}
+                </option>
               ))}
-              <Checkbox value="unknown">other</Checkbox>
-            </VStack>
-          </CheckboxGroup>
-        </FormControl>
-        <FormControl>
-          <FormLabel>Created By</FormLabel>
-          <Select
-            value={createdBy}
-            onChange={(e) => setCreatedBy(e.target.value)}
-          >
-            <option value="">Select User</option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name}
-              </option>
-            ))}
-          </Select>
-        </FormControl>
-        <Button type="submit" colorScheme="blue">
-          Add Event
-        </Button>
-      </VStack>
-    </Box>
+            </Select>
+          </FormControl>
+          <Button type="submit" colorScheme="blue" width="full">
+            Add Event
+          </Button>
+        </VStack>
+      </form>
+    </Container>
   );
 };
 

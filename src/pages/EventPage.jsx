@@ -5,63 +5,52 @@ import {
   Heading,
   Text,
   Image,
+  Button,
   VStack,
   HStack,
-  Container,
-  Button,
-  Avatar,
   Center,
-  useBreakpointValue,
+  Avatar,
 } from '@chakra-ui/react';
 import { DataContext } from '../contexts/DataContext';
 
 const EventPage = () => {
   const { eventId } = useParams();
   const { events, categories, users } = useContext(DataContext);
-
-  const event = events.find((event) => event.id === parseInt(eventId));
-
-  if (!event) {
-    return <Text>Event not found</Text>;
-  }
-
-  const getCategoryNames = (categoryIds) => {
-    return categoryIds.map((id) => categories.find((category) => category.id === id)?.name || 'Unknown').join(', ');
-  };
-
+  const event = events.find((e) => e.id === parseInt(eventId));
+  const categoryNames = event.categoryIds.map((id) => categories.find((cat) => cat.id === id)?.name).join(', ');
   const creator = users.find((user) => user.id === event.createdBy);
 
-  const stackDirection = useBreakpointValue({ base: 'column', md: 'row' });
+  if (!event) return <div>Event not found</div>;
 
   return (
-    <Container maxW="container.lg" p={4}>
-      <VStack spacing={4} align="center">
-        <Heading>{event.title}</Heading>
-        {event.image && <Image src={event.image} alt={event.title} boxSize={{ base: '100%', md: '300px' }} />}
-        <Text>{event.description}</Text>
-        <Text>
-          {new Date(event.startTime).toLocaleString()} -{' '}
-          {new Date(event.endTime).toLocaleString()}
+    <Center>
+      <Box maxW="lg" borderWidth="1px" borderRadius="lg" overflow="hidden" p={6} boxShadow="md">
+        <Heading mb={4}>{event.title}</Heading>
+        <Image src={event.image} alt={event.title} mb={4} />
+        <Text mb={4}>{event.description}</Text>
+        <Text mb={2}>
+          <strong>Start Time:</strong> {new Date(event.startTime).toLocaleString()}
         </Text>
-        <Text>
-          Categories: {event.categoryIds?.length ? getCategoryNames(event.categoryIds) : 'Unknown'}
+        <Text mb={4}>
+          <strong>End Time:</strong> {new Date(event.endTime).toLocaleString()}
+        </Text>
+        <Text mb={4}>
+          <strong>Categories:</strong> {categoryNames}
         </Text>
         {creator && (
-          <HStack direction={stackDirection} spacing={4} alignItems="center">
-            <Avatar size="sm" src={creator.image} name={creator.name} />
-            <Text>Created By: {creator.name}</Text>
+          <HStack mb={4}>
+            <Avatar src={creator.image} name={creator.name} />
+            <Text>Created By: {creator.name || 'Unknown Author'}</Text>
           </HStack>
         )}
-        <HStack spacing={4}>
-          <Button as={Link} to={`/events/edit/${event.id}`} colorScheme="blue">
-            Edit
-          </Button>
-          <Button as={Link} to="/events" colorScheme="gray">
-            Back to Events
-          </Button>
-        </HStack>
-      </VStack>
-    </Container>
+        <Button as={Link} to={`/events/edit/${event.id}`} colorScheme="blue" mr={4}>
+          Edit
+        </Button>
+        <Button as={Link} to="/events" colorScheme="red">
+          Back to Events
+        </Button>
+      </Box>
+    </Center>
   );
 };
 

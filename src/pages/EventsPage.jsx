@@ -1,5 +1,4 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useState, useCallback } from 'react';
 import {
   Box,
   Heading,
@@ -11,44 +10,114 @@ import {
   Center,
   Container,
   Avatar,
-  useBreakpointValue,
+  Input,
+  Select,
+  Spinner,
+  useToast,
+  useDisclosure,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
 } from '@chakra-ui/react';
 import { DataContext } from '../contexts/DataContext';
+import { Link } from 'react-router-dom';
 
 const EventsPage = () => {
-  const { events, setEvents, categories, users } = useContext(DataContext);
+  const { events, categories, users, setEvents } = useContext(DataContext);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [eventToDelete, setEventToDelete] = useState(null);
+  const toast = useToast();
 
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm('Are you sure to delete event?');
-    if (confirmed) {
-      try {
-        await fetch(`http://localhost:3000/events/${id}`, {
-          method: 'DELETE',
-        });
-        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== id));
-      } catch (error) {
-        console.error('Error deleting event:', error);
-      }
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const handleFilter = (event) => {
+    setSelectedCategory(event.target.value);
+  };
+
+  const filteredEvents = events
+    .filter((event) => event.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((event) => {
+      // Ensure categoryIds is an array and filter events properly
+      const categoryIds = event.categoryIds || [];
+      return selectedCategory ? categoryIds.includes(Number(selectedCategory)) : true;
+    });
+
+  const handleDeleteClick = (id) => {
+    setEventToDelete(id);
+    onOpen();
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await fetch(`http://localhost:3000/events/${eventToDelete}`, {
+        method: 'DELETE',
+      });
+      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventToDelete));
+      toast({
+        title: 'Event deleted.',
+        description: 'The event has been deleted successfully.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'There was an error deleting the event.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
     }
+    onClose();
   };
 
-  const getCategoryNames = (categoryIds) => {
-    return categoryIds.map((id) => categories.find((category) => category.id === id)?.name || 'Unknown').join(', ');
-  };
+  const getCategoryNames = useCallback(
+    (categoryIds) => {
+      return categoryIds
+        .map((id) => categories.find((category) => category.id === id)?.name || 'Unknown')
+        .join(', ');
+    },
+    [categories]
+  );
 
-  const getUserById = (userId) => {
-    return users.find((user) => user.id === userId);
-  };
+  const getUserById = useCallback(
+    (userId) => {
+      return users.find((user) => user.id === userId);
+    },
+    [users]
+  );
 
-  const stackDirection = useBreakpointValue({ base: 'column', md: 'row' });
+  if (!events.length) return <Spinner />;
 
   return (
     <Container maxW="container.lg" p={4}>
       <Center>
         <Heading mb={4}>Events</Heading>
       </Center>
+      <Input
+        placeholder="Search events"
+        value={searchTerm}
+        onChange={handleSearch}
+        mb={4}
+      />
+      <Select placeholder="All categories" value={selectedCategory} onChange={handleFilter} mb={4}>
+        {categories.map((category) => (
+          <option key={category.id} value={category.id}>
+            {category.name}
+          </option>
+        ))}
+      </Select>
       <VStack spacing={6}>
-        {events.map((event) => {
+        {filteredEvents.map((event) => {
           const creator = getUserById(event.createdBy);
           return (
             <Box
@@ -75,17 +144,20 @@ const EventsPage = () => {
               <Text mb={2}>
                 Categories: {event.categoryIds?.length ? getCategoryNames(event.categoryIds) : 'Unknown'}
               </Text>
+              <Text mb={2}>
+                Location: {event.location || 'Location not specified'}
+              </Text>
               {creator && (
                 <HStack justifyContent="center" mb={4}>
-                  <Avatar size="sm" src={creator.image} name={creator.name} />
-                  <Text>Created By: {creator.name}</Text>
+                  <Avatar size="sm" src={creator.image || 'https://via.placeholder.com/150'} name={creator.name} />
+                  <Text>Created By: {creator.name || 'Unknown Author'}</Text>
                 </HStack>
               )}
-              <HStack justifyContent="center" spacing={4} direction={stackDirection}>
+              <HStack justifyContent="center" spacing={4}>
                 <Button as={Link} to={`/events/edit/${event.id}`} colorScheme="blue">
                   Edit
                 </Button>
-                <Button colorScheme="red" onClick={() => handleDelete(event.id)}>
+                <Button colorScheme="red" onClick={() => handleDeleteClick(event.id)}>
                   Delete
                 </Button>
               </HStack>
@@ -93,6 +165,25 @@ const EventsPage = () => {
           );
         })}
       </VStack>
+
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Event</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Are you sure you want to delete this event?</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button colorScheme="red" onClick={handleConfirmDelete} ml={3}>
+              Delete
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Container>
   );
 };
