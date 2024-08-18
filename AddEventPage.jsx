@@ -1,5 +1,4 @@
 import React, { useState, useContext } from 'react';
-
 import {
   Box,
   Heading,
@@ -14,14 +13,6 @@ import {
   CheckboxGroup,
   Checkbox,
   useToast,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { DataContext } from '../contexts/DataContext';
@@ -43,7 +34,6 @@ const AddEventPage = () => {
 
   const toast = useToast();
   const navigate = useNavigate();
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleCategoryChange = (values) => {
     setSelectedCategories(values.map(Number));
@@ -72,9 +62,7 @@ const AddEventPage = () => {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to create user: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error('Failed to create user');
 
       const createdUser = await response.json();
       setUsers((prevUsers) => [...prevUsers, createdUser]);
@@ -87,13 +75,10 @@ const AddEventPage = () => {
         duration: 5000,
         isClosable: true,
       });
-
-      onClose(); // Close the modal after creating the user
     } catch (error) {
-      console.error("Error details:", error); // Log the error for more details
       toast({
         title: 'Error',
-        description: error.message || 'There was an error creating the user.',
+        description: 'There was an error creating the user.',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -233,8 +218,24 @@ const AddEventPage = () => {
             </Select>
           </FormControl>
 
-          <Button onClick={onOpen} colorScheme="teal" width="full">
-            Add User
+          {/* New User Creation Fields */}
+          <FormControl>
+            <FormLabel>New User Name (Optional)</FormLabel>
+            <Input
+              value={newUserName}
+              onChange={(e) => setNewUserName(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Upload Avatar (Optional)</FormLabel>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setNewUserAvatar(e.target.files[0])}
+            />
+          </FormControl>
+          <Button onClick={handleCreateUser} colorScheme="teal" width="full" disabled={!newUserName || !newUserAvatar}>
+            Create User
           </Button>
 
           <Button type="submit" colorScheme="blue" width="full">
@@ -242,38 +243,6 @@ const AddEventPage = () => {
           </Button>
         </VStack>
       </form>
-
-      {/* Modal for creating a new user */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Create New User</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <FormControl>
-              <FormLabel>New User Name</FormLabel>
-              <Input
-                value={newUserName}
-                onChange={(e) => setNewUserName(e.target.value)}
-              />
-            </FormControl>
-            <FormControl mt={4}>
-              <FormLabel>Upload Avatar</FormLabel>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setNewUserAvatar(e.target.files[0])}
-              />
-            </FormControl>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleCreateUser} isDisabled={!newUserName || !newUserAvatar}>
-              Create User
-            </Button>
-            <Button onClick={onClose}>Cancel</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </Container>
   );
 };

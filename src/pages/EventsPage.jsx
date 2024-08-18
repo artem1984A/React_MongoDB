@@ -45,22 +45,21 @@ const EventsPage = () => {
   const filteredEvents = events
     .filter((event) => event.title.toLowerCase().includes(searchTerm.toLowerCase()))
     .filter((event) => {
-      // Ensure categoryIds is an array and filter events properly
       const categoryIds = event.categoryIds || [];
       return selectedCategory ? categoryIds.includes(Number(selectedCategory)) : true;
     });
 
-  const handleDeleteClick = (id) => {
-    setEventToDelete(id);
+  const handleDeleteClick = (_id) => {
+    setEventToDelete(_id); // Use _id for MongoDB
     onOpen();
   };
 
   const handleConfirmDelete = async () => {
     try {
-      await fetch(`http://localhost:3000/events/${eventToDelete}`, {
+      await fetch(`/api/events/${eventToDelete}`, {
         method: 'DELETE',
       });
-      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventToDelete));
+      setEvents((prevEvents) => prevEvents.filter((event) => event._id !== eventToDelete));
       toast({
         title: 'Event deleted.',
         description: 'The event has been deleted successfully.',
@@ -91,7 +90,7 @@ const EventsPage = () => {
 
   const getUserById = useCallback(
     (userId) => {
-      return users.find((user) => user.id === userId);
+      return users.find((user) => user._id === userId); // Use _id for MongoDB
     },
     [users]
   );
@@ -121,7 +120,7 @@ const EventsPage = () => {
           const creator = getUserById(event.createdBy);
           return (
             <Box
-              key={event.id}
+              key={event._id} // Use _id for MongoDB
               p={4}
               borderWidth="1px"
               borderRadius="lg"
@@ -154,10 +153,10 @@ const EventsPage = () => {
                 </HStack>
               )}
               <HStack justifyContent="center" spacing={4}>
-                <Button as={Link} to={`/events/edit/${event.id}`} colorScheme="blue">
+                <Button as={Link} to={`/home/events/edit/${event._id}`} colorScheme="blue">
                   Edit
                 </Button>
-                <Button colorScheme="red" onClick={() => handleDeleteClick(event.id)}>
+                <Button colorScheme="red" onClick={() => handleDeleteClick(event._id)}>
                   Delete
                 </Button>
               </HStack>

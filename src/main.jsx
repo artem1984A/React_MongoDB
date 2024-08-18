@@ -13,10 +13,10 @@ import { DataProvider } from './contexts/DataContext';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <ChakraProvider>
-    <BrowserRouter>
+    <BrowserRouter >
       <DataProvider>
         <Routes>
-          <Route path="/" element={<Root />}>
+          <Route path="home" element={<Root />}>
             <Route path="events" element={<EventsPage />} />
             <Route path="events/:eventId" element={<EventPage />} />
             <Route path="events/edit/:eventId" element={<EditEventPage />} />

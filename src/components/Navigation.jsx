@@ -8,13 +8,13 @@ export const Navigation = () => {
       <Flex justify="space-between" align="center">
         <Heading size="md">Event Manager</Heading>
         <Flex>
-          <ChakraLink as={Link} to="/" p={2} _hover={{ textDecoration: 'underline' }}>
+          <ChakraLink as={Link} to="/home" p={2} _hover={{ textDecoration: 'underline' }}>
             Home
           </ChakraLink>
-          <ChakraLink as={Link} to="/events" p={2} _hover={{ textDecoration: 'underline' }}>
+          <ChakraLink as={Link} to="/home/events" p={2} _hover={{ textDecoration: 'underline' }}>
             Events
           </ChakraLink>
-          <ChakraLink as={Link} to="/add-event" p={2} _hover={{ textDecoration: 'underline' }}>
+          <ChakraLink as={Link} to="/home/add-event" p={2} _hover={{ textDecoration: 'underline' }}>
             Add Event
           </ChakraLink>
         </Flex>

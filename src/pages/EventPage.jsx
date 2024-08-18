@@ -16,11 +16,18 @@ import { DataContext } from '../contexts/DataContext';
 const EventPage = () => {
   const { eventId } = useParams();
   const { events, categories, users } = useContext(DataContext);
-  const event = events.find((e) => e.id === parseInt(eventId));
-  const categoryNames = event.categoryIds.map((id) => categories.find((cat) => cat.id === id)?.name).join(', ');
-  const creator = users.find((user) => user.id === event.createdBy);
+
+  // Find the event using the MongoDB _id field
+  const event = events.find((e) => e._id === eventId);
 
   if (!event) return <div>Event not found</div>;
+
+  const categoryNames = event.categoryIds
+    .map((id) => categories.find((cat) => cat.id === id)?.name)
+    .join(', ');
+
+  // Find the creator using the MongoDB _id field
+  const creator = users.find((user) => user._id === event.createdBy);
 
   return (
     <Center>
@@ -43,10 +50,10 @@ const EventPage = () => {
             <Text>Created By: {creator.name || 'Unknown Author'}</Text>
           </HStack>
         )}
-        <Button as={Link} to={`/events/edit/${event.id}`} colorScheme="blue" mr={4}>
+        <Button as={Link} to={`/home/events/edit/${event._id}`} colorScheme="blue" mr={4}>
           Edit
         </Button>
-        <Button as={Link} to="/events" colorScheme="red">
+        <Button as={Link} to="/home/events" colorScheme="red">
           Back to Events
         </Button>
       </Box>

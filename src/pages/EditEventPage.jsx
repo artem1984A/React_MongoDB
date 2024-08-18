@@ -24,7 +24,7 @@ import { DataContext } from '../contexts/DataContext';
 import { useParams, useNavigate } from 'react-router-dom';
 
 const EditEventPage = () => {
-  const { eventId } = useParams();
+  const { eventId } = useParams();  // eventId will now be a string (MongoDB ObjectId)
   const { events, setEvents, categories, users } = useContext(DataContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -42,17 +42,17 @@ const EditEventPage = () => {
   useEffect(() => {
     const fetchEventData = async () => {
       try {
-        const event = events.find((event) => event.id === parseInt(eventId));
+        const event = events.find((event) => event._id === eventId);  // Use _id for MongoDB
         if (!event) throw new Error('Event not found');
 
-        setTitle(event.title);
-        setDescription(event.description);
-        setImage(event.image);
-        setStartTime(event.startTime);
-        setEndTime(event.endTime);
-        setSelectedCategories(event.categoryIds.map(String));
-        setCreatedBy(event.createdBy);
-        setLocation(event.location);
+        setTitle(event.title || '');
+        setDescription(event.description || '');
+        setImage(event.image || '');
+        setStartTime(event.startTime || '');
+        setEndTime(event.endTime || '');
+        setSelectedCategories((event.categoryIds || []).map(String)); // Map category IDs to string
+        setCreatedBy(event.createdBy ? event.createdBy.toString() : ''); // Convert ObjectId to string
+        setLocation(event.location || '');
 
         setLoading(false);
       } catch (error) {
@@ -65,7 +65,7 @@ const EditEventPage = () => {
   }, [eventId, events]);
 
   const handleCategoryChange = (selectedValues) => {
-    setSelectedCategories(selectedValues.map(Number));
+    setSelectedCategories(selectedValues); // No need to map to numbers
   };
 
   const handleSubmit = async (e) => {
@@ -83,19 +83,19 @@ const EditEventPage = () => {
     }
 
     const updatedEvent = {
-      ...events.find((event) => event.id === parseInt(eventId)),
+      ...events.find((event) => event._id === eventId),  // Use _id for MongoDB
       title,
       description,
       image,
       startTime,
       endTime,
-      categoryIds: selectedCategories,
-      createdBy: parseInt(createdBy, 10),
+      categoryIds: selectedCategories.map(Number), // Ensure categories are stored as numbers
+      createdBy, // This should be the ObjectId string
       location,
     };
 
     try {
-      const response = await fetch(`http://localhost:3000/events/${eventId}`, {
+      const response = await fetch(`/api/events/${eventId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ const EditEventPage = () => {
 
       const eventData = await response.json();
       setEvents((prevEvents) =>
-        prevEvents.map((ev) => (ev.id === eventData.id ? eventData : ev))
+        prevEvents.map((ev) => (ev._id === eventData._id ? eventData : ev))
       );
 
       toast({
@@ -118,7 +118,7 @@ const EditEventPage = () => {
         isClosable: true,
       });
 
-      navigate('/');
+      navigate('/home/events');
     } catch (error) {
       toast({
         title: 'Error',
@@ -137,12 +137,12 @@ const EditEventPage = () => {
       <Alert status="error">
         <AlertIcon />
         <AlertTitle>Failed to load event</AlertTitle>
-        <AlertDescription>{/*error*/}</AlertDescription>
+        <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
   }
 
-  const creator = users.find((user) => user.id === createdBy);
+  const creator = users.find((user) => user._id === createdBy);  // Use _id for MongoDB
 
   return (
     <Box maxW="container.sm" mx="auto" p={4}>
@@ -204,14 +204,13 @@ const EditEventPage = () => {
 
           <FormControl id="categories">
             <FormLabel>Categories</FormLabel>
-            <CheckboxGroup value={selectedCategories.map(String)} onChange={handleCategoryChange}>
+            <CheckboxGroup value={selectedCategories} onChange={handleCategoryChange}>
               <VStack align="start">
                 {categories.map((category) => (
-                  <Checkbox key={category.id} value={String(category.id)}>
+                  <Checkbox key={category._id} value={String(category._id)}>
                     {category.name}
                   </Checkbox>
                 ))}
-                <Checkbox value="999">others</Checkbox>
               </VStack>
             </CheckboxGroup>
           </FormControl>
@@ -224,8 +223,7 @@ const EditEventPage = () => {
               onChange={(e) => setCreatedBy(e.target.value)}
             >
               {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  <Avatar size="xs" mr={2} src={user.image} name={user.name} />
+                <option key={user._id} value={user._id}>
                   {user.name}
                 </option>
               ))}
@@ -241,7 +239,7 @@ const EditEventPage = () => {
 
           <Center>
             <HStack spacing={4}>
-              <Button colorScheme="red" onClick={() => navigate('/')}>
+              <Button colorScheme="red" onClick={() => navigate('/home/events')}>
                 Cancel
               </Button>
               <Button type="submit" colorScheme="blue">

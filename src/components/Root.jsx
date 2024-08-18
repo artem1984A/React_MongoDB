@@ -6,13 +6,13 @@ const Root = () => {
   return (
     <Box p={4}>
       <Flex as="nav" mb={8} justifyContent="space-between" flexDirection={["column", "row"]}>
-        <ChakraLink as={Link} to="/" fontWeight="bold" mr={4}>
+        <ChakraLink as={Link} to="/home" fontWeight="bold" mr={4}>
           Home
         </ChakraLink>
-        <ChakraLink as={Link} to="/events" fontWeight="bold" mr={4}>
+        <ChakraLink as={Link} to="/home/events" fontWeight="bold" mr={4}>
           Events
         </ChakraLink>
-        <ChakraLink as={Link} to="/add-event" fontWeight="bold">
+        <ChakraLink as={Link} to="/home/add-event" fontWeight="bold">
           Add Event
         </ChakraLink>
       </Flex>
