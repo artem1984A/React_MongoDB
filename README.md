@@ -5,5 +5,15 @@ but with fetching data from MongoDB database through the Node.js (Express) serve
 
 It is modification of my finil project for certificated Front-End Developer in WincAcademy (https://www.wincacademy.nl).
 
+To create an optimized build for production:
+npm run build
+# or
+yarn build
+
+After:
+node index
+
+for start at local host
+
 New version of this project can be seen at https://www.ryzhov.website/home/
 (There are using MongoBD, Redis and added some more functionalites)
