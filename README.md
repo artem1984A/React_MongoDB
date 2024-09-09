@@ -10,10 +10,7 @@ npm run build
 # or
 yarn build
 
-After:
-node index
 
-for start at local host
 
 New version of this project can be seen at https://www.ryzhov.website/home/
 (There are using MongoBD, Redis and added some more functionalites)
